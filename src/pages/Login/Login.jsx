@@ -7,18 +7,34 @@ import logo from './images/logo.png'
 
 /*登录路由组件*/
 class Login extends Component {
-  handleSubmit = (e) => {
+  handleSubmit = e => {
     e.preventDefault()
-    const {form} = this.props
-    // 获取表单相的输入数据
-    const values = form.getFieldsValue()
-    console.log(values)
+    this.props.form.validateFields((err, values) => {
+      // 校验成功
+      if (!err) {
+        console.log('Received values of form: ', values)
+      }
+    })
+  }
+  validatePwd = (rule, value, callback) => {
+    if (!value) {
+      callback('密码必须输入')
+    } else if (value.length < 4) {
+      callback('密码长度不能小于4位')
+    } else if (value.length > 12) {
+      callback('密码长度不能大于12位')
+    } else if (!/^\w+$/.test(value)) {
+      callback('密码必须是英文、数字或下划线组成')
+    } else {
+      callback()
+    }
+
   }
 
   render() {
     // 得到具有强大功能的form对象
     const {form} = this.props
-    const { getFieldDecorator } = form
+    const {getFieldDecorator} = form
     return (
       <div className='login'>
         <header className='login-header'>
@@ -30,17 +46,26 @@ class Login extends Component {
           <Form onSubmit={this.handleSubmit} className="login-form">
             <Form.Item>
               {getFieldDecorator('username', {
-                rules: [{ required: true, message: '请输入你的用户名!' }],
+                // 声明式验证: 直接使用别人定义好的验证进行验证
+                rules: [
+                  {required: true, message: '请输入你的用户名!'},
+                  {min: 4, message: '用户名至少4位'},
+                  {max: 12, message: '用户名最多12为'},
+                  {pattern: /^\w+$/, message: '用户名必须是数字字母和下划线'}
+                ],
+                initialValue: 'admin'
               })(
                 <Input
-                  prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
+                  prefix={<Icon type="user" style={{color: 'rgba(0,0,0,.25)'}}/>}
                   placeholder="用户名"
                 />,
               )}
             </Form.Item>
             <Form.Item>
               {getFieldDecorator('password', {
-                rules: [{ required: true, message: '请输入你的密码!' }],
+                rules: [
+                  {validator: this.validatePwd}
+                ],
               })(
                 <Input
                   prefix={<Icon type="lock" style={{color: 'rgba(0,0,0,.25)'}}/>}
@@ -63,5 +88,5 @@ class Login extends Component {
 
 //包装Form组件生成一个新的组件: Form(Login)
 //新组建会向Form组件传递一个强大的对象属性: from
-const WrapLogin = Form.create()(Login)
+const WrapLogin = Form.create({ name: 'normal_login' })(Login)
 export default WrapLogin
