@@ -1,18 +1,35 @@
 import React, {Component} from 'react'
+import {Redirect} from "react-router-dom"
 
-import {Form, Icon, Input, Button} from 'antd'
+import {Form, Icon, Input, Button, message} from 'antd'
+
+import {reqLogin} from '../../api'
+import memoryVar from '../../utils/memoryUtils'
+import {saveUser} from '../../utils/storageUtils'
+
 
 import './Login.less'
 import logo from './images/logo.png'
 
+
 /*登录路由组件*/
 class Login extends Component {
-  handleSubmit = e => {
+
+   handleSubmit = e => {
     e.preventDefault()
-    this.props.form.validateFields((err, values) => {
+    this.props.form.validateFields(async (err, values) => {
       // 校验成功
       if (!err) {
-        console.log('Received values of form: ', values)
+        const {username, password} = values
+        const res = await reqLogin(username, password)
+        if (res.status === 0) {
+          message.success('登录成功')
+          memoryVar.user = res.data
+          saveUser(res.data)
+          this.props.history.replace('/')
+        } else {
+          message.error(res.msg)
+        }
       }
     })
   }
@@ -33,6 +50,10 @@ class Login extends Component {
 
   render() {
     // 得到具有强大功能的form对象
+    let {user} = memoryVar
+    if (Object.keys(user).length !== 0) {
+      return <Redirect to='/'/>
+    }
     const {form} = this.props
     const {getFieldDecorator} = form
     return (
